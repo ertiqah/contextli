@@ -11,7 +11,7 @@ Three 1920×1080 / 30fps spots in the Contextli brand (Paper/Studio palette, New
 ## Pipeline
 1. **Picture** — `concept-*.html` (deterministic, time-driven). Render: `NODE_PATH=$(npm root -g) node render.cjs concept-1-ten-terminals.html out/concept-1-ten-terminals.mp4 30`
 2. **Sound design** — `python3 audio/sfx.py` → `audio/sfx/*.wav` (synthesized, synced to the animation, stereo-panned).
-3. **VO + music + mix** — `ELEVENLABS_API_KEY=... node produce.mjs` → `out/final/*.mp4` + `.srt`.
+3. **VO + music + mix** — `ELEVENLABS_API_KEY=... node produce.mjs` (in the cloud sandbox prefix `NODE_USE_ENV_PROXY=1`) → `out/final/*.mp4` + `.srt`.
    - VO script, timings, voice and music briefs live in `audio/cues.json`.
    - Voice: Brian by default; `ELEVENLABS_VOICE_ID=<id>` to use another (e.g. your own clone).
    - Music: ElevenLabs Music (`music_v1`) from a sectioned brief matched to each cut.

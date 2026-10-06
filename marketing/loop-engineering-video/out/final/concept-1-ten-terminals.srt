@@ -1,39 +1,39 @@
 1
-00:00:00,900 --> 00:00:03,400
-Running ten Claude Code terminals at once?
+00:00:00,900 --> 00:00:02,337
+Running ten Claudes at once?
 
 2
-00:00:03,600 --> 00:00:06,800
-Ten terminals. One of you. Approving everything.
+00:00:03,600 --> 00:00:05,690
+Ten terminals. One of you.
 
 3
-00:00:07,850 --> 00:00:09,600
-What if you just... said it?
+00:00:07,850 --> 00:00:09,182
+What if you just said it?
 
 4
-00:00:09,900 --> 00:00:12,900
+00:00:09,950 --> 00:00:12,223
 Say it into your phone, whenever it hits.
 
 5
-00:00:13,000 --> 00:00:15,000
-Tag it, and it's a ticket.
+00:00:13,000 --> 00:00:14,802
+Tag it. It's a ticket.
 
 6
-00:00:15,250 --> 00:00:20,000
+00:00:15,250 --> 00:00:19,456
 One loop checks in every ten minutes, and ships them, one by one.
 
 7
-00:00:20,300 --> 00:00:22,900
+00:00:20,300 --> 00:00:22,338
 You only hear back when it's done.
 
 8
-00:00:23,600 --> 00:00:25,000
+00:00:23,550 --> 00:00:25,483
 Stop babysitting terminals.
 
 9
-00:00:25,100 --> 00:00:26,500
+00:00:25,603 --> 00:00:27,223
 Become the orchestrator.
 
 10
-00:00:26,700 --> 00:00:29,200
+00:00:27,400 --> 00:00:29,516
 Loop engineering, with Contextli.

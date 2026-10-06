@@ -3,73 +3,296 @@
     "voice_id": "nPczCjzI2devNBz1zQrb",
     "voice_name": "Brian (ElevenLabs premade). Override with ELEVENLABS_VOICE_ID, e.g. your own cloned voice.",
     "model_id": "eleven_multilingual_v2",
-    "voice_settings": { "stability": 0.45, "similarity_boost": 0.8, "style": 0.3, "use_speaker_boost": true, "speed": 1.0 }
+    "voice_settings": {
+      "stability": 0.45,
+      "similarity_boost": 0.8,
+      "style": 0.3,
+      "use_speaker_boost": true,
+      "speed": 1.0
+    }
   },
   "concepts": {
     "concept-1-ten-terminals": {
       "duration": 30,
       "vo": [
-        { "t": 0.9,  "end": 3.4,  "text": "Running ten Claude Code terminals at once?" },
-        { "t": 3.6,  "end": 6.8,  "text": "Ten terminals. One of you. Approving everything." },
-        { "t": 7.85, "end": 9.6,  "text": "What if you just... said it?" },
-        { "t": 9.9,  "end": 12.9, "text": "Say it into your phone, whenever it hits." },
-        { "t": 13.0, "end": 15.0, "text": "Tag it, and it's a ticket." },
-        { "t": 15.25,"end": 20.0, "text": "One loop checks in every ten minutes, and ships them, one by one." },
-        { "t": 20.3, "end": 22.9, "text": "You only hear back when it's done." },
-        { "t": 23.6, "end": 25.0, "text": "Stop babysitting terminals." },
-        { "t": 25.1, "end": 26.5, "text": "Become the orchestrator." },
-        { "t": 26.7, "end": 29.2, "text": "Loop engineering, with Contextli." }
+        {
+          "t": 0.9,
+          "end": 3.3,
+          "text": "Running ten Claudes at once?"
+        },
+        {
+          "t": 3.6,
+          "end": 6.8,
+          "text": "Ten terminals. One of you."
+        },
+        {
+          "t": 7.85,
+          "end": 9.7,
+          "text": "What if you just said it?"
+        },
+        {
+          "t": 9.95,
+          "end": 12.9,
+          "text": "Say it into your phone, whenever it hits."
+        },
+        {
+          "t": 13.0,
+          "end": 15.1,
+          "text": "Tag it. It's a ticket."
+        },
+        {
+          "t": 15.25,
+          "end": 20.0,
+          "text": "One loop checks in every ten minutes, and ships them, one by one."
+        },
+        {
+          "t": 20.3,
+          "end": 22.9,
+          "text": "You only hear back when it's done."
+        },
+        {
+          "t": 23.55,
+          "end": 25.5,
+          "text": "Stop babysitting terminals."
+        },
+        {
+          "t": 25.6,
+          "end": 27.3,
+          "text": "Become the orchestrator."
+        },
+        {
+          "t": 27.4,
+          "end": 29.8,
+          "text": "Loop engineering, with Contextli."
+        }
       ],
       "music": {
-        "global": ["instrumental", "modern tech product launch music", "clean polished mix", "warm analog synths", "112 BPM"],
-        "negative": ["vocals", "singing", "lyrics", "spoken word", "harsh distortion"],
+        "global": [
+          "instrumental",
+          "modern tech product launch music",
+          "clean polished mix",
+          "warm analog synths",
+          "112 BPM"
+        ],
+        "negative": [
+          "vocals",
+          "singing",
+          "lyrics",
+          "spoken word",
+          "harsh distortion"
+        ],
         "sections": [
-          { "name": "Tension", "ms": 7400, "styles": ["dark minimal pulse", "ticking hi-hats", "low synth drone", "building tension", "no kick drum"] },
-          { "name": "Lift", "ms": 15600, "styles": ["bright upbeat drop", "plucked synths", "soft four-on-the-floor kick", "light claps", "optimistic and calm"] },
-          { "name": "Outro", "ms": 7000, "styles": ["fuller and uplifting", "resolving", "ends on a clean final chord with a short tail"] }
+          {
+            "name": "Tension",
+            "ms": 7400,
+            "styles": [
+              "dark minimal pulse",
+              "ticking hi-hats",
+              "low synth drone",
+              "building tension",
+              "no kick drum"
+            ]
+          },
+          {
+            "name": "Lift",
+            "ms": 15600,
+            "styles": [
+              "bright upbeat drop",
+              "plucked synths",
+              "soft four-on-the-floor kick",
+              "light claps",
+              "optimistic and calm"
+            ]
+          },
+          {
+            "name": "Outro",
+            "ms": 7000,
+            "styles": [
+              "fuller and uplifting",
+              "resolving",
+              "ends on a clean final chord with a short tail"
+            ]
+          }
         ]
-      }
+      },
+      "music_gain": "if(lt(t,7.3),0.45,1)"
     },
     "concept-2-you-think-it-ships": {
       "duration": 28.5,
       "vo": [
-        { "t": 0.5,  "end": 2.6,  "text": "An idea hits you on a walk." },
-        { "t": 3.4,  "end": 6.4,  "text": "So you just say it, into Contextli." },
-        { "t": 7.2,  "end": 9.6,  "text": "It becomes a ticket." },
-        { "t": 10.35,"end": 14.4, "text": "Your loop picks it up, while you get on with your day." },
-        { "t": 14.8, "end": 17.2, "text": "And you hear back when it's done." },
-        { "t": 18.9, "end": 22.4, "text": "Every idea. All day. Shipped." },
-        { "t": 23.3, "end": 25.1, "text": "You think. It ships." },
-        { "t": 25.4, "end": 27.8, "text": "Loop engineering, with Contextli." }
+        {
+          "t": 0.5,
+          "end": 2.6,
+          "text": "An idea hits you on a walk."
+        },
+        {
+          "t": 3.4,
+          "end": 6.4,
+          "text": "So you just say it, into Contextli."
+        },
+        {
+          "t": 7.2,
+          "end": 9.6,
+          "text": "It becomes a ticket."
+        },
+        {
+          "t": 10.35,
+          "end": 14.4,
+          "text": "Your loop picks it up, while you get on with your day."
+        },
+        {
+          "t": 14.8,
+          "end": 17.2,
+          "text": "And you hear back when it's done."
+        },
+        {
+          "t": 18.9,
+          "end": 22.4,
+          "text": "Every idea. All day. Shipped."
+        },
+        {
+          "t": 23.3,
+          "end": 25.1,
+          "text": "You think. It ships."
+        },
+        {
+          "t": 25.4,
+          "end": 27.8,
+          "text": "Loop engineering, with Contextli."
+        }
       ],
       "music": {
-        "global": ["instrumental", "light optimistic lo-fi electronic", "soft piano and plucks", "gentle groove", "100 BPM", "clean polished mix"],
-        "negative": ["vocals", "singing", "lyrics", "spoken word", "aggressive drums"],
+        "global": [
+          "instrumental",
+          "light optimistic lo-fi electronic",
+          "soft piano and plucks",
+          "gentle groove",
+          "100 BPM",
+          "clean polished mix"
+        ],
+        "negative": [
+          "vocals",
+          "singing",
+          "lyrics",
+          "spoken word",
+          "aggressive drums"
+        ],
         "sections": [
-          { "name": "Idea", "ms": 7000, "styles": ["sparse piano motif", "airy pads", "curious"] },
-          { "name": "Journey", "ms": 10500, "styles": ["soft beat enters", "steady and warm", "subtle forward motion"] },
-          { "name": "Montage", "ms": 5000, "styles": ["energy lifts", "brighter plucks", "fuller drums"] },
-          { "name": "End", "ms": 6000, "styles": ["resolving", "warm final chord", "short tail"] }
+          {
+            "name": "Idea",
+            "ms": 7000,
+            "styles": [
+              "sparse piano motif",
+              "airy pads",
+              "curious"
+            ]
+          },
+          {
+            "name": "Journey",
+            "ms": 10500,
+            "styles": [
+              "soft beat enters",
+              "steady and warm",
+              "subtle forward motion"
+            ]
+          },
+          {
+            "name": "Montage",
+            "ms": 5000,
+            "styles": [
+              "energy lifts",
+              "brighter plucks",
+              "fuller drums"
+            ]
+          },
+          {
+            "name": "End",
+            "ms": 6000,
+            "styles": [
+              "resolving",
+              "warm final chord",
+              "short tail"
+            ]
+          }
         ]
       }
     },
     "concept-3-junkie-vs-orchestrator": {
       "duration": 23.5,
       "vo": [
-        { "t": 0.3,  "end": 2.3,  "text": "Same Claude. Same day." },
-        { "t": 3.3,  "end": 7.0,  "text": "The code junkie babysits ten terminals, approving every step." },
-        { "t": 7.3,  "end": 12.9, "text": "The orchestrator talks to their phone between meetings, and lets one loop do the work." },
-        { "t": 13.4, "end": 16.0, "text": "Six p.m. Guess who shipped more?" },
-        { "t": 18.4, "end": 20.6, "text": "Stop typing. Start orchestrating." },
-        { "t": 20.9, "end": 23.2, "text": "Loop engineering, with Contextli." }
+        {
+          "t": 0.3,
+          "end": 2.3,
+          "text": "Same Claude. Same day."
+        },
+        {
+          "t": 3.3,
+          "end": 7.0,
+          "text": "The code junkie babysits ten terminals, approving every step."
+        },
+        {
+          "t": 7.3,
+          "end": 12.9,
+          "text": "The orchestrator talks to their phone between meetings, and lets one loop do the work."
+        },
+        {
+          "t": 13.4,
+          "end": 16.0,
+          "text": "Six p.m. Guess who shipped more?"
+        },
+        {
+          "t": 18.4,
+          "end": 20.95,
+          "text": "Stop typing. Start orchestrating."
+        },
+        {
+          "t": 21.0,
+          "end": 23.45,
+          "text": "Loop engineering, with Contextli."
+        }
       ],
       "music": {
-        "global": ["instrumental", "playful confident modern electronic", "punchy but clean", "116 BPM", "clean polished mix"],
-        "negative": ["vocals", "singing", "lyrics", "spoken word"],
+        "global": [
+          "instrumental",
+          "playful confident modern electronic",
+          "punchy but clean",
+          "116 BPM",
+          "clean polished mix"
+        ],
+        "negative": [
+          "vocals",
+          "singing",
+          "lyrics",
+          "spoken word"
+        ],
         "sections": [
-          { "name": "Intro", "ms": 3000, "styles": ["single synth stab", "anticipation"] },
-          { "name": "Day", "ms": 14000, "styles": ["driving groove", "ticking clock percussion", "bouncy bass", "steady build"] },
-          { "name": "Payoff", "ms": 6500, "styles": ["bright resolve", "triumphant but short", "final chord with tail"] }
+          {
+            "name": "Intro",
+            "ms": 3000,
+            "styles": [
+              "single synth stab",
+              "anticipation"
+            ]
+          },
+          {
+            "name": "Day",
+            "ms": 14000,
+            "styles": [
+              "driving groove",
+              "ticking clock percussion",
+              "bouncy bass",
+              "steady build"
+            ]
+          },
+          {
+            "name": "Payoff",
+            "ms": 6500,
+            "styles": [
+              "bright resolve",
+              "triumphant but short",
+              "final chord with tail"
+            ]
+          }
         ]
       }
     }

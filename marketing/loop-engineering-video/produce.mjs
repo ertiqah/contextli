@@ -17,6 +17,7 @@ const DIR = path.dirname(new URL(import.meta.url).pathname);
 const CUES = JSON.parse(readFileSync(path.join(DIR, 'audio/cues.json'), 'utf8'));
 const KEY = process.env.ELEVENLABS_API_KEY;
 const API = 'https://api.elevenlabs.io/v1';
+const FMT = process.env.ELEVENLABS_FORMAT || 'mp3_44100_128'; // 192k needs the Creator tier
 const CACHE = path.join(DIR, 'audio/cache');
 const OUT = path.join(DIR, 'out/final');
 const TARGET = { vo: +(process.env.VO_DB ?? -16), music: +(process.env.MUSIC_DB ?? -23), sfx: +(process.env.SFX_DB ?? -24), master: -14 };
@@ -47,12 +48,16 @@ async function voiceLines(c) {
     const body = { text: line.text, model_id: v.model_id, voice_settings: v.voice_settings,
       previous_text: c.vo[i - 1]?.text, next_text: c.vo[i + 1]?.text };
     const f = path.join(CACHE, `vo-${sha(voice + JSON.stringify(body))}.mp3`);
-    await eleven(`/text-to-speech/${voice}?output_format=mp3_44100_192`, body, f);
+    await eleven(`/text-to-speech/${voice}?output_format=${FMT}`, body, f);
     const d = durationOf(f), room = line.end - line.t;
     const tempo = Math.min(1.15, Math.max(1, d / room));
     if (d / tempo > room + 0.05) console.warn(`  ! "${line.text}" runs ${(d / tempo - room).toFixed(2)}s past its window`);
-    files.push({ ...line, file: f, tempo, dur: d / tempo });
+    // never let a line step on the previous one: nudge it later if needed
+    const prev = files[files.length - 1], t = prev ? Math.max(line.t, prev.t + prev.dur + 0.12) : line.t;
+    if (t > line.t + 0.01) console.warn(`  ~ "${line.text}" starts ${(t - line.t).toFixed(2)}s late to clear the previous line`);
+    files.push({ ...line, t, file: f, tempo, dur: d / tempo });
   }
+  console.log(files.map(v => `    ${v.t.toFixed(2)}–${(v.t + v.dur).toFixed(2)}s  x${v.tempo.toFixed(2)}  ${v.text}`).join('\n'));
   return files;
 }
 
@@ -64,11 +69,11 @@ async function music(name, c) {
   };
   const f = path.join(CACHE, `music-${name}-${sha(JSON.stringify(plan))}.mp3`);
   try {
-    return await eleven('/music?output_format=mp3_44100_192', { composition_plan: plan, model_id: 'music_v1' }, f);
+    return await eleven(`/music?output_format=${FMT}`, { composition_plan: plan, model_id: 'music_v1' }, f);
   } catch (e) {
     console.warn('  composition plan rejected, falling back to a text prompt:', e.message.slice(0, 160));
     const prompt = `${m.global.join(', ')}. ` + m.sections.map(s => `${s.name} (${s.ms / 1000}s): ${s.styles.join(', ')}`).join('. ') + `. Avoid: ${m.negative.join(', ')}.`;
-    return eleven('/music?output_format=mp3_44100_192', { prompt, music_length_ms: Math.round(c.duration * 1000), model_id: 'music_v1', force_instrumental: true }, f);
+    return eleven(`/music?output_format=${FMT}`, { prompt, music_length_ms: Math.round(c.duration * 1000), model_id: 'music_v1', force_instrumental: true }, f);
   }
 }
 
@@ -100,7 +105,7 @@ async function produce(name) {
     }
     inputs.push('-i', voStem, '-i', mus);
     graph.push(`[2:a]aresample=48000,volume=${gain(voStem, TARGET.vo)},asplit=2[vo][vokey]`);
-    graph.push(`[3:a]aresample=48000,aformat=channel_layouts=stereo,volume=${gain(mus, TARGET.music)},apad,atrim=0:${D},afade=t=in:d=0.3,afade=t=out:st=${D - 2.2}:d=2.2[mraw]`);
+    graph.push(`[3:a]aresample=48000,aformat=channel_layouts=stereo,volume=${gain(mus, TARGET.music)},volume='${c.music_gain || 1}':eval=frame,apad,atrim=0:${D},afade=t=in:d=0.3,afade=t=out:st=${D - 2.2}:d=2.2[mraw]`);
     // duck music ~6 dB under the voice
     graph.push(`[mraw][vokey]sidechaincompress=threshold=0.03:ratio=5:attack=25:release=450:makeup=1[mus]`);
     mixIns.push('[vo]', '[mus]');
