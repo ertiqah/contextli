@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ten Terminals to One</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  #dark { background: var(--night); }
+  #vignette { background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(9,9,12,.92) 0%, rgba(9,9,12,.75) 45%, rgba(9,9,12,0) 100%); }
+  .count { font-family: var(--mono); font-size: 26px; color: #8b8b98; white-space: nowrap; }
+  .count b { color: #fff; font-size: 34px; }
+  .e2 { font-size: 104px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="light" class="layer"><div id="world" class="layer"></div></div>
+  <div id="dark" class="layer"><div id="terms" class="layer"></div><div id="vignette" class="layer"></div></div>
+  <div id="top" class="layer"></div>
+</div>
+<script src="shared.js"></script>
+<script>
+const { clamp, prog, lerp, E, kf, env, S, add, caption, showCap, terminal, phone, phoneState, ticket, ticketStatus, ring, ringState, logo } = M;
+const dark = document.getElementById('dark'), terms = document.getElementById('terms'),
+      vig = document.getElementById('vignette'), light = document.getElementById('light'), world = document.getElementById('world'), top_ = document.getElementById('top');
+
+// ---------------- ACT 1: terminal chaos ----------------
+const ST = {
+  wait: ['warn', '? Do you want to proceed? (y/n)'],
+  think: ['c', '✻ Thinking… (esc to interrupt)'],
+  ctx: ['err', 'Context left until compact: 3%'],
+  input: ['dim', '&gt; _'],
+  test: ['warn', 'Run npm test?  1. Yes  2. No'],
+  fail: ['err', '✗ 3 tests failed'],
+};
+const TERMS = [
+  ['claude — api',        [['dim', '› refactor the auth middleware'], ['c', '● Reading 14 files…']],          ['think', 'wait', 'think']],
+  ['claude — web',        [['dim', '› make the navbar sticky'], ['', '● Update(src/Nav.tsx)']],               ['wait', 'think', 'wait']],
+  ['claude — billing',    [['dim', '› stripe webhook retries'], ['c', '● Bash(npm run dev)']],                ['ctx', 'wait', 'ctx']],
+  ['claude — mobile',     [['dim', '› fix the iOS keyboard bug'], ['', '● Edit(App.tsx) +12 -4']],            ['test', 'fail', 'test']],
+  ['claude — onboarding', [['dim', '› shorter welcome emails'], ['c', '● Writing 3 drafts…']],                ['think', 'input', 'wait']],
+  ['claude — search',     [['dim', '› add fuzzy matching'], ['', '● Grep("query", **/*.ts)']],                ['wait', 'think', 'fail']],
+  ['claude — docs',       [['dim', '› update the API docs'], ['c', '● Reading openapi.yaml']],                ['input', 'wait', 'input']],
+  ['claude — infra',      [['dim', '› bump node to 22'], ['', '● Bash(docker build .)']],                     ['fail', 'wait', 'think']],
+  ['claude — admin',      [['dim', '› CSV export for users'], ['c', '● Create(export.ts)']],                   ['think', 'ctx', 'wait']],
+  ['claude — emails',     [['dim', '› fix the unsubscribe link'], ['', '● Update(templates/)']],              ['wait', 'test', 'wait']],
+];
+const SLOTS = [[330,215,-2],[880,190,1.5],[1430,230,-1],[1640,560,2],[1140,520,-1.5],[590,545,1],[260,820,2],[800,870,-1],[1340,860,1.5],[1720,890,-2]];
+const APPEAR = [0.25, 1.25, 1.75, 2.15, 2.45, 2.7, 2.9, 3.05, 3.2, 3.35];
+const BADGE = [3.9, 4.25, 4.55, 4.8, 5.0, 5.2, 5.35, 5.5, 5.62, 5.75];
+const T = TERMS.map(([title, lines]) => terminal(terms, title, lines));
+
+const counter = add(dark, '<div class="count" style="transform-origin:left">terminals open: <b>0</b></div>'); const counterN = counter.querySelector('b');
+const cur = add(dark, `<div class="cursor">${M.ICON.cursor}</div>`);
+const capA = caption(dark, 'Claude Maxxing?', 'on-dark');
+const capB = caption(dark, '10 terminals. <span style="color:var(--err)">1</span> of you.', 'on-dark');
+capB.innerHTML = '<span class="w">10</span> <span class="w">terminals.</span> <span class="w" style="color:var(--err)">1</span> <span class="w">of</span> <span class="w">you.</span>';
+capB._w = [...capB.querySelectorAll('.w')];
+const wipe = add(top_, '<div class="wipe"></div>');
+
+// cursor path: hops between badges
+const CUR = [[3.7, 960, 700], [4.1, 1440, 280], [4.5, 330, 260], [4.9, 1650, 600], [5.3, 600, 590], [5.7, 880, 230], [6.1, 1340, 900], [6.5, 260, 860]];
+
+// ---------------- ACT 2: light world ----------------
+const capQ = caption(light, 'What if you just… <span>said it?</span>');
+capQ.innerHTML = '<span class="w">What</span> <span class="w">if</span> <span class="w">you</span> <span class="w">just…</span> <span class="w hl">said</span> <span class="w hl">it?</span>';
+capQ._w = [...capQ.querySelectorAll('.w')];
+const cap1 = caption(light, 'Say it from your phone. Whenever it hits.', 'sm');
+const cap2 = caption(light, 'One loop picks it up. And *ships* it.', 'sm');
+const cap3 = caption(light, 'You only hear back / when it’s *done.*', 'sm');
+
+const ph = phone(world);
+const CTX = [
+  ['On a walk', '8:12', 'Add Google sign-in to the onboarding flow', 'Add Google sign-in', 'CTX-201'],
+  ['In line for coffee', '12:40', 'The pricing page has a typo on mobile. Fix it.', 'Fix pricing typo on mobile', 'CTX-202'],
+  ['On the couch', '21:05', 'Write tests for the CSV export', 'Tests for CSV export', 'CTX-203'],
+];
+const chips = CTX.map(([where, time]) => add(world, `<div class="chip"><span class="dot"></span>${where}<span class="t">· ${time}</span></div>`));
+const TK = CTX.map(c => ticket(world, c[4], c[3]));
+const SAY = [9.8, 11.85, 13.65];          // when each voice note starts
+const PICK = [15.2, 16.65, 18.1];          // when the loop picks each ticket
+const qHead = add(world, '<div class="colh">Queue</div>');
+const dHead = add(world, '<div class="colh">Done</div>');
+const rg = ring(world, 340);
+const rLabel = add(world, '<div class="ring-label"><b>1 loop</b><span>checks every 10 min</span></div>');
+
+// ---------------- ACT 3: end card ----------------
+const e1 = caption(top_, 'Stop babysitting 10 terminals.', 'sm');
+const strike = document.createElement('div'); strike.className = 'strike'; strike.style.width = '104%'; e1.appendChild(strike);
+const e2 = caption(top_, 'Become the *orchestrator.*', 'e2');
+const lg = logo(top_);
+const url = add(top_, '<div class="url">contextli.com/<b>loop-engineering</b></div>');
+
+const PH = { x: 400, y: 590, s: 1 };
+const QX = 975, QY = 400, QG = 122, DX = 1700, RX = 1370, RY = 560;
+world.style.transformOrigin = `${PH.x}px ${PH.y}px`;
+
+function render(t) {
+  // ===== ACT 1 =====
+  const darkOn = t < 7.9;
+  dark.style.display = darkOn ? 'block' : 'none';
+  if (darkOn) {
+    const implode = E.in(prog(t, 6.75, 7.35));
+    let open = 0;
+    T.forEach((el, i) => {
+      const a = APPEAR[i], p = prog(t, a, a + 0.45), e = E.back(p);
+      if (t >= a) open++;
+      let [x, y, r] = SLOTS[i];
+      let s = 0.92;
+      if (i === 0) { // first terminal starts big & centered, then settles into its slot
+        const settle = E.inOut(prog(t, 1.0, 1.6));
+        x = lerp(960, x, settle); y = lerp(540, y, settle); s = lerp(1.35, 0.92, settle); r = lerp(0, r, settle);
+      }
+      const shake = t > 4 ? Math.sin(t * 40 + i) * 1.5 * prog(t, 4, 6.5) : 0;
+      x = lerp(x, 960, implode) + shake; y = lerp(y, 540, implode);
+      S(el, { x, y, s: s * (0.7 + 0.3 * e) * (1 - implode * 0.9), r: r + implode * 25 * (i % 2 ? 1 : -1), o: clamp(p * 3) * (1 - implode) });
+      const seq = TERMS[i][2], k = Math.floor((t * 0.9 + i * 0.37)) % seq.length, st = ST[seq[k]];
+      if (el._st._k !== st) { el._st._k = st; el._st.className = 'tl st ' + st[0]; el._st.innerHTML = st[1]; }
+      const bp = prog(t, BADGE[i], BADGE[i] + 0.25);
+      el._badge.style.opacity = E.out(bp);
+      el._badge.style.transform = `scale(${(0.5 + 0.5 * E.back(bp)) * (1 + 0.08 * Math.sin(t * 10 + i))})`;
+    });
+    counterN.textContent = open;
+    S(counter, { x: 230, y: 50, o: env(t, 0.3, 7.0, 0.3, 0.3) });
+    // cursor
+    const cx = kf(t, CUR.map(([tt, x]) => [tt, x, 'outQuint'])), cy = kf(t, CUR.map(([tt, , y]) => [tt, y, 'outQuint']));
+    const click = CUR.some(([tt]) => t > tt - 0.05 && t < tt + 0.06) ? 0.82 : 1;
+    S(cur, { x: cx + 14, y: cy + 14, s: click, o: env(t, 3.6, 6.8, 0.2, 0.2) });
+    vig.style.opacity = Math.max(env(t, 0.9, 3.35, 0.3, 0.3), env(t, 3.45, 6.85, 0.3, 0.3)) * 0.95;
+    showCap(capA, t, 0.95, 3.35, 960, 540);
+    showCap(capB, t, 3.5, 6.85, 960, 540, { stagger: 0.18 });
+  }
+  // wipe to light
+  const w = prog(t, 7.15, 7.9);
+  S(wipe, { x: 960, y: 540, s: E.inOut(w) * 24, o: w > 0 && w < 1 ? 1 : 0 });
+
+  // ===== ACT 2 =====
+  const fadeAll = 1 - E.inOut(prog(t, 22.9, 23.5));
+  light.style.display = t > 7.3 ? 'block' : 'none';
+  showCap(capQ, t, 7.75, 9.45, 960, 540, { stagger: 0.12 });
+  showCap(cap1, t, 9.75, 14.75, 960, 120);
+  showCap(cap2, t, 14.9, 20.0, 960, 120);
+  showCap(cap3, t, 20.3, 22.95, 1330, 540, { stagger: 0.09 });
+
+  // zoom onto the phone for the 'done' beat
+  const zoom = E.inOut(prog(t, 19.95, 20.55));
+  world.style.transform = `translateX(${zoom * 190}px) scale(${1 + zoom * 0.2})`;
+  const side = fadeAll * (1 - zoom);
+  // phone
+  const phIn = E.outQuint(prog(t, 9.25, 9.95));
+  const buzz = t > 20.2 && t < 20.7 ? Math.sin(t * 90) * 4 : 0;
+  S(ph, { x: PH.x - (1 - phIn) * 120 + buzz, y: PH.y, s: PH.s, r: buzz * 0.4, o: phIn * fadeAll });
+  let k = -1; SAY.forEach((s, i) => { if (t >= s - 0.2) k = i; });
+  if (k >= 0 && t < 15) {
+    const s0 = SAY[k], clear = 1 - prog(t, s0 + 1.15, s0 + 1.3);
+    phoneState(ph, t, { time: CTX[k][1], text: CTX[k][2], tp: prog(t, s0 + 0.05, s0 + 1.05) * (clear > 0 ? 1 : 0), amp: env(t, s0, s0 + 1.1, 0.2, 0.25), tag: prog(t, s0 + 1.0, s0 + 1.3) * clear });
+  } else {
+    phoneState(ph, t, { time: t < 15 ? '8:10' : '21:30', notifs: [[prog(t, 20.15, 20.6), 'Done: Google sign-in', 'PR is ready for your review.'], [prog(t, 20.9, 21.35), 'Done: Pricing typo fixed', 'Deployed to preview.'], [prog(t, 21.6, 22.05), 'Done: CSV export tests', '14 tests added, all passing.']] });
+  }
+  chips.forEach((c, i) => {
+    const a = SAY[i] - 0.25, b = i < 2 ? SAY[i + 1] - 0.25 : 14.9;
+    const o = env(t, a, b, 0.3, 0.25);
+    S(c, { x: PH.x + 350, y: 228 + (1 - o) * 20, s: 1.15 * (0.85 + 0.15 * E.back(clamp(o))), r: -3, o: o * fadeAll });
+  });
+
+  // headers & ring
+  S(qHead, { x: QX - 160, y: 310, o: prog(t, 9.6, 10.0) * side });
+  const rIn = E.back(prog(t, 14.3, 14.9));
+  S(rg, { x: RX, y: RY, s: 0.4 + 0.6 * rIn, o: clamp(rIn * 2) * side });
+  S(rLabel, { x: RX, y: RY + 225, o: prog(t, 14.6, 15.0) * side });
+  S(dHead, { x: DX - 140, y: 310, o: prog(t, 14.7, 15.1) * side });
+  const working = PICK.some(p => t > p + 0.45 && t < p + 1.15);
+  ringState(rg, t * 140 + (working ? prog(t, 15, 19.5) * 400 : 0), PICK.reduce((f, p) => (t > p + 0.45 && t < p + 1.4 ? E.inOut(prog(t, p + 0.45, p + 1.15)) * (1 - prog(t, p + 1.2, p + 1.4)) : f), 0));
+
+  // tickets
+  TK.forEach((el, i) => {
+    const s0 = SAY[i], fly = E.inOut(prog(t, s0 + 1.3, s0 + 1.85));
+    // queue slot (shifts up as earlier tickets are picked)
+    const shift = PICK.slice(0, i).reduce((n, p) => n + E.inOut(prog(t, p + 0.3, p + 0.75)), 0);
+    const qx = QX, qy = QY + (i - shift) * QG;
+    // launch point is the phone
+    let x = lerp(PH.x, qx, fly), y = lerp(PH.y - 120, qy, fly) - Math.sin(fly * Math.PI) * 140, s = lerp(0.55, 1, fly);
+    let o = clamp(prog(t, s0 + 1.22, s0 + 1.32));
+    const p = PICK[i], into = E.inOut(prog(t, p, p + 0.45)), out = E.inOut(prog(t, p + 1.15, p + 1.65));
+    if (t > p) {
+      x = lerp(qx, RX, into); y = lerp(qy, RY, into); s = lerp(1, 0.6, into);
+      if (t > p + 1.15) { x = lerp(RX, DX, out); y = lerp(RY, QY + i * 118, out) - Math.sin(out * Math.PI) * 60; s = lerp(0.6, 0.86, out); }
+      if (t > p + 0.45 && t < p + 1.15) y += Math.sin((t - p) * 9) * 4;
+    }
+    ticketStatus(el, t > p + 1.15 ? 'done' : t > p + 0.4 ? 'working' : 'queued');
+        S(el, { x, y, s, o: o * side });
+  });
+
+  // ===== ACT 3 =====
+  showCap(e1, t, 23.5, 30.5, 960, 390, { stagger: 0.06 });
+  strike.style.transform = `scaleX(${E.inOut(prog(t, 24.5, 24.95))})`;
+  e1.style.opacity = t > 23.5 ? 1 - 0.6 * prog(t, 24.9, 25.2) : 0;
+  showCap(e2, t, 25.05, 30.5, 960, 540, { stagger: 0.12, dy: 60 });
+  const lgIn = E.outQuint(prog(t, 26.3, 27.0));
+  S(lg, { x: 960, y: 760 + (1 - lgIn) * 30, o: lgIn });
+  S(url, { x: 960, y: 850 + (1 - lgIn) * 30, o: E.outQuint(prog(t, 26.6, 27.2)) });
+}
+M.play({ duration: 30, render });
+</script>
+</body>
+</html>
