@@ -7,17 +7,17 @@
 <link rel="stylesheet" href="shared.css">
 <style>
   #world { transform-origin: 0 0; }
-  .idea { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 10px rgba(91,75,255,.12), 0 0 60px 10px rgba(91,75,255,.45); }
+  .idea { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 10px rgba(0,146,198,.12), 0 0 60px 10px rgba(0,146,198,.45); }
   .halo { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--accent); }
   .rail { height: 4px; background: repeating-linear-gradient(90deg, var(--line) 0 18px, transparent 18px 34px); }
-  .slabel { font-size: 150px; font-weight: 800; letter-spacing: -0.04em; color: var(--muted); white-space: nowrap; }
-  .okb { width: 120px; height: 120px; border-radius: 50%; background: var(--ok); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(18,161,80,.35); }
+  .slabel { font-family: var(--serif); font-size: 160px; font-weight: 500; letter-spacing: -0.02em; color: var(--muted); white-space: nowrap; }
+  .okb { width: 120px; height: 120px; border-radius: 50%; background: var(--ok); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(46,158,82,.35); }
   .okb svg { width: 70px; height: 70px; }
-  .tally { font-size: 46px; font-weight: 800; letter-spacing: -0.03em; white-space: nowrap; display: flex; align-items: center; gap: 18px; }
+  .tally { font-family: var(--serif); font-size: 52px; font-weight: 500; letter-spacing: -0.015em; white-space: nowrap; display: flex; align-items: center; gap: 18px; }
   .cap.xs { font-size: 40px; }
   .tally .n { font-family: var(--mono); color: var(--ok); font-size: 56px; min-width: 70px; }
-  .e2 { font-size: 112px; }
-  .cap.big { font-size: 96px; }
+  .e2 { font-size: 128px; }
+  .cap.big { font-size: 108px; }
 </style>
 </head>
 <body>
@@ -57,7 +57,7 @@ const caps = [
   caption(world, 'Say it.', 'big'),
   caption(world, 'It becomes a ticket.', 'big'),
   caption(world, 'Your loop picks it up.', 'big'),
-  caption(world, 'You hear back when it’s *done.*', 'big'),
+  caption(world, 'You hear back when it’s _done._', 'big'),
 ];
 const sub3 = caption(world, 'while you get on with your day', 'xs');
 
@@ -65,10 +65,10 @@ const capAll = caption(screen, 'Every idea. *All day.*', 'big');
 const tally = add(screen, `<div class="tally"><div class="okb" style="width:60px;height:60px">${ICON.checkW}</div>Shipped today <span class="n">0</span></div>`);
 const tallyN = tally.querySelector('.n');
 
-const end1 = caption(screen, 'You think. *It ships.*', 'e2');
+const end1 = caption(screen, 'You think. *It* _ships._', 'e2');
 const end2 = caption(screen, 'Be the orchestrator, not the code junkie.', 'xs');
 const lg = logo(screen);
-const url = add(screen, '<div class="url">contextli.com/<b>loop-engineering</b></div>');
+const url = add(screen, '<div class="url">Set it up in 20 minutes · contextli.com/<b>loop-engineering</b></div>');
 
 const MSTART = 18.7, MGAP = 0.1, MDUR = 1.9;
 
@@ -147,8 +147,8 @@ function render(t) {
   showCap(end1, t, 23.2, 30, 960, 430, { stagger: 0.14, dy: 60 });
   showCap(end2, t, 24.4, 30, 960, 560, { stagger: 0.04 });
   const lgIn = E.outQuint(prog(t, 25.2, 25.9));
-  S(lg, { x: 960, y: 750 + (1 - lgIn) * 30, o: lgIn });
-  S(url, { x: 960, y: 840 + (1 - lgIn) * 30, o: E.outQuint(prog(t, 25.5, 26.1)) });
+  S(lg, { x: 960, y: 760, o: lgIn > 0 ? 1 : 0 }); M.logoIn(lg, prog(t, 25.2, 26.4));
+  S(url, { x: 960, y: 860 + (1 - lgIn) * 20, o: E.outQuint(prog(t, 25.5, 26.1)) });
 }
 M.play({ duration: 28.5, render });
 </script>

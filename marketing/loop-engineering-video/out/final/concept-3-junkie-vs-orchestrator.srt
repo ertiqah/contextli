@@ -1,0 +1,23 @@
+1
+00:00:00,300 --> 00:00:02,300
+Same Claude. Same day.
+
+2
+00:00:03,300 --> 00:00:07,000
+The code junkie babysits ten terminals, approving every step.
+
+3
+00:00:07,300 --> 00:00:12,900
+The orchestrator talks to their phone between meetings, and lets one loop do the work.
+
+4
+00:00:13,400 --> 00:00:16,000
+Six p.m. Guess who shipped more?
+
+5
+00:00:18,400 --> 00:00:20,600
+Stop typing. Start orchestrating.
+
+6
+00:00:20,900 --> 00:00:23,200
+Loop engineering, with Contextli.

@@ -59,9 +59,10 @@
   function caption(parent, text, cls = '') {
     const html = text.split(' ').map(w => {
       if (w === '/') return '<br>';
-      const hl = /^\*.*\*[.,!?…]*$/.test(w);
-      const clean = w.replace(/\*/g, '');
-      return `<span class="w${hl ? ' hl' : ''}">${clean}</span>`;
+      const hl = /^\*.*\*[.,!?…]*$/.test(w), ul = /^_.*_[.,!?…]*$/.test(w);
+      const clean = w.replace(/[*_]/g, '');
+      const swoosh = ul ? '<svg viewBox="0 0 200 20" preserveAspectRatio="none"><path d="M4 13c38-7 84-10 128-8 22 1 44 3 64 6"/></svg>' : '';
+      return `<span class="w${hl || ul ? ' hl' : ''}${ul ? ' u' : ''}">${clean}${swoosh}</span>`;
     }).join(' ').replace(/ <br> /g, '<br>');
     const el = add(parent, `<div class="cap ${cls}">${html}</div>`);
     el._w = [...el.querySelectorAll('.w')];
@@ -75,6 +76,8 @@
     S(el, { x, y, o: 1, s: opt.s ?? 1 });
     el._w.forEach((w, i) => {
       const p = E.outQuint(prog(t, a + i * st, a + i * st + dur));
+      const u = w._u || (w._u = w.querySelector('svg') || 0);
+      if (u) u.style.clipPath = `inset(-50% ${(1 - E.inOut(prog(t, a + i * st + dur * 0.6, a + i * st + dur + 0.45))) * 100}% -50% 0)`;
       w.style.opacity = p * out;
       w.style.transform = `translateY(${(1 - p) * dy - (1 - out) * 20}px)`;
       w.style.filter = p < 0.98 ? `blur(${(1 - p) * 8}px)` : 'none';
@@ -169,8 +172,21 @@
     el._fill.setAttribute('stroke-dashoffset', 942.5 * (1 - clamp(fill)));
   }
 
-  function logo(parent) {
-    return add(parent, `<div class="logo"><div class="mk">${ICON.mic}</div><div class="wm">Contextli</div></div>`);
+  // Canonical mark from brand/BRAND_GUIDELINES.md: listening node, stem, cyan bar (voice in), amber bar (polish out).
+  const MARK = (ink = '#1c1f25', cyan = '#0092c6', amber = '#e6ac3d') => `<svg viewBox="0 0 112 100" fill="none"><circle class="m-dot" cx="20" cy="50" r="12" fill="${ink}"/><rect class="m-stem" x="43" y="6" width="6" height="88" rx="3" fill="${ink}"/><rect class="m-cy" x="60" y="37" width="44" height="11" rx="5.5" fill="${cyan}"/><rect class="m-am" x="60" y="55" width="44" height="11" rx="5.5" fill="${amber}"/></svg>`;
+  function logo(parent, dark = false) {
+    const el = add(parent, `<div class="logo">${dark ? MARK('#f5f7f9', '#3fd1f7', '#faca4b') : MARK()}<div class="wm"${dark ? ' style="color:#f5f7f9"' : ''}>Contextli</div></div>`);
+    el._parts = ['.m-dot', '.m-stem', '.m-cy', '.m-am', '.wm'].map(q => el.querySelector(q));
+    return el;
+  }
+  // Logo build-on: dot pops, stem grows, bars slide out, wordmark fades up. p = 0..1
+  function logoIn(el, p) {
+    const [dot, stem, cy, am, wm] = el._parts, k = (a, b) => E.outQuint(prog(p, a, b));
+    dot.style.transformOrigin = '20px 50px'; dot.style.transform = `scale(${E.back(prog(p, 0, 0.3))})`;
+    stem.style.transformOrigin = '46px 50px'; stem.style.transform = `scaleY(${k(0.15, 0.45)})`;
+    cy.style.transformOrigin = '60px 42px'; cy.style.transform = `scaleX(${k(0.35, 0.65)})`;
+    am.style.transformOrigin = '60px 60px'; am.style.transform = `scaleX(${k(0.45, 0.75)})`;
+    wm.style.opacity = k(0.55, 0.95); wm.style.transform = `translateX(${(1 - k(0.55, 0.95)) * -16}px)`;
   }
 
   // ---------- player ----------
@@ -182,7 +198,7 @@
       window.__duration = duration;
       window.__seek = t => render(t);
       render(0);
-      document.fonts.ready.then(() => { window.__ready = true; });
+      document.fonts.load('500 40px Newsreader').then(() => document.fonts.load('600 20px "Hanken Grotesk"')).then(() => document.fonts.load('500 20px "JetBrains Mono"')).then(() => document.fonts.ready).then(() => { window.__ready = true; });
       return;
     }
     const fit = () => { const s = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = `translate(-50%,-50%) scale(${s})`; };
@@ -209,5 +225,5 @@
     });
   }
 
-  window.M = { W, H, clamp, prog, lerp, E, kf, env, S, h, add, typed, ICON, caption, showCap, terminal, phone, phoneState, ticket, ticketStatus, ring, ringState, logo, play };
+  window.M = { W, H, clamp, prog, lerp, E, kf, env, S, h, add, typed, ICON, MARK, caption, showCap, terminal, phone, phoneState, ticket, ticketStatus, ring, ringState, logo, logoIn, play };
 })();

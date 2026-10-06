@@ -7,9 +7,9 @@
 <link rel="stylesheet" href="shared.css">
 <style>
   #darkp { background: var(--night); width: 960px; height: 1080px; transform-origin: left center; }
-  .side { font-size: 64px; font-weight: 800; letter-spacing: -0.035em; white-space: nowrap; }
+  .side { font-family: var(--serif); font-size: 72px; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap; }
   .side.l { color: #fff; }
-  .side small { display: block; font-size: 26px; font-weight: 500; letter-spacing: -0.01em; color: var(--muted); margin-top: 6px; text-align: center; }
+  .side small { display: block; font-family: var(--sans); font-size: 26px; font-weight: 500; letter-spacing: -0.01em; color: var(--muted); margin-top: 6px; text-align: center; }
   .clock { font-family: var(--mono); font-weight: 700; font-size: 34px; padding: 12px 26px; border-radius: 999px; background: #fff; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.18); white-space: nowrap; }
   .mt { width: 250px; height: 140px; border-radius: 12px; background: var(--term); border: 2px solid var(--term-line); font-family: var(--mono); font-size: 13px; color: var(--term-text); overflow: hidden; }
   .mt .bar { height: 24px; background: var(--term-bar); display: flex; gap: 6px; align-items: center; padding: 0 10px; }
@@ -17,10 +17,10 @@
   .mt .bar span { color: var(--term-dim); font-size: 11px; margin-left: 6px; }
   .mt .b { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; white-space: nowrap; }
   .mt .s { color: var(--claude); }
-  .mt.flash { border-color: var(--warn); box-shadow: 0 0 0 4px rgba(255,176,32,.18); }
+  .mt.flash { border-color: var(--warn); box-shadow: 0 0 0 4px rgba(250,202,75,.18); }
   .mt.flash .s { color: var(--warn); }
   .tal { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
-  .tal .lbl { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; width: 130px; }
+  .tal .lbl { font-family: var(--serif); font-size: 34px; font-weight: 500; letter-spacing: -0.01em; width: 130px; }
   .tal .lbl.l { color: #fff; }
   .chk { width: 44px; height: 44px; border-radius: 50%; background: var(--ok); display: flex; align-items: center; justify-content: center; }
   .chk svg { width: 26px; height: 26px; }
@@ -28,9 +28,9 @@
   .meta b { color: var(--ink); }
   .meta.l b { color: #fff; }
   .mini { width: 150px; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid var(--line); box-shadow: 0 8px 20px rgba(0,0,0,.08); font-weight: 700; font-size: 15px; }
-  .mini i { display: block; height: 7px; border-radius: 4px; background: #E9E6DF; margin-top: 8px; font-style: normal; }
+  .mini i { display: block; height: 7px; border-radius: 4px; background: var(--chip-bg); margin-top: 8px; font-style: normal; }
   .mini em { font-style: normal; color: var(--claude); font-size: 13px; }
-  .e2 { font-size: 104px; }
+  .e2 { font-size: 124px; }
 </style>
 </head>
 <body>
@@ -89,9 +89,9 @@ const clock = add(top_, '<div class="clock">9:00am</div>');
 const PHX = 1220, PHY = 540, RX = 1690, RY = 500;
 
 // ---------- end ----------
-const e2 = caption(top_, 'Stop typing. / Start *orchestrating.*', 'e2');
+const e2 = caption(top_, 'Stop typing. / Start _orchestrating._', 'e2');
 const lg = logo(top_);
-const url = add(top_, '<div class="url">contextli.com/<b>loop-engineering</b></div>');
+const url = add(top_, '<div class="url">Set it up in 20 minutes · contextli.com/<b>loop-engineering</b></div>');
 
 function render(t) {
   showCap(intro, t, 0.2, 2.35, 960, 540, { stagger: 0.12 });
@@ -152,8 +152,8 @@ function render(t) {
   // ----- end -----
   showCap(e2, t, 18.3, 30, 960, 440, { stagger: 0.12, dy: 60 });
   const lgIn = E.outQuint(prog(t, 19.8, 20.5));
-  S(lg, { x: 960, y: 760 + (1 - lgIn) * 30, o: lgIn });
-  S(url, { x: 960, y: 850 + (1 - lgIn) * 30, o: E.outQuint(prog(t, 20.1, 20.7)) });
+  S(lg, { x: 960, y: 770, o: lgIn > 0 ? 1 : 0 }); M.logoIn(lg, prog(t, 19.8, 21.0));
+  S(url, { x: 960, y: 870 + (1 - lgIn) * 20, o: E.outQuint(prog(t, 20.1, 20.7)) });
 }
 M.play({ duration: 23.5, render });
 </script>

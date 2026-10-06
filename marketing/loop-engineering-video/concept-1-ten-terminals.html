@@ -7,10 +7,10 @@
 <link rel="stylesheet" href="shared.css">
 <style>
   #dark { background: var(--night); }
-  #vignette { background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(9,9,12,.92) 0%, rgba(9,9,12,.75) 45%, rgba(9,9,12,0) 100%); }
+  #vignette { background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(12,15,19,.92) 0%, rgba(12,15,19,.75) 45%, rgba(12,15,19,0) 100%); }
   .count { font-family: var(--mono); font-size: 26px; color: #8b8b98; white-space: nowrap; }
   .count b { color: #fff; font-size: 34px; }
-  .e2 { font-size: 104px; }
+  .e2 { font-size: 124px; }
 </style>
 </head>
 <body>
@@ -64,11 +64,11 @@ const CUR = [[3.7, 960, 700], [4.1, 1440, 280], [4.5, 330, 260], [4.9, 1650, 600
 
 // ---------------- ACT 2: light world ----------------
 const capQ = caption(light, 'What if you just… <span>said it?</span>');
-capQ.innerHTML = '<span class="w">What</span> <span class="w">if</span> <span class="w">you</span> <span class="w">just…</span> <span class="w hl">said</span> <span class="w hl">it?</span>';
+capQ.innerHTML = '<span class="w">What</span> <span class="w">if</span> <span class="w">you</span> <span class="w">just…</span> <span class="w hl"><em>said</em></span> <span class="w hl"><em>it?</em></span>';
 capQ._w = [...capQ.querySelectorAll('.w')];
 const cap1 = caption(light, 'Say it from your phone. Whenever it hits.', 'sm');
-const cap2 = caption(light, 'One loop picks it up. And *ships* it.', 'sm');
-const cap3 = caption(light, 'You only hear back / when it’s *done.*', 'sm');
+const cap2 = caption(light, 'One loop picks it up. And _ships_ it.', 'sm');
+const cap3 = caption(light, 'You only hear back / when it’s _done._', 'sm');
 
 const ph = phone(world);
 const CTX = [
@@ -88,9 +88,9 @@ const rLabel = add(world, '<div class="ring-label"><b>1 loop</b><span>checks eve
 // ---------------- ACT 3: end card ----------------
 const e1 = caption(top_, 'Stop babysitting 10 terminals.', 'sm');
 const strike = document.createElement('div'); strike.className = 'strike'; strike.style.width = '104%'; e1.appendChild(strike);
-const e2 = caption(top_, 'Become the *orchestrator.*', 'e2');
+const e2 = caption(top_, 'Become the _orchestrator._', 'e2');
 const lg = logo(top_);
-const url = add(top_, '<div class="url">contextli.com/<b>loop-engineering</b></div>');
+const url = add(top_, '<div class="url">Set it up in 20 minutes · contextli.com/<b>loop-engineering</b></div>');
 
 const PH = { x: 400, y: 590, s: 1 };
 const QX = 975, QY = 400, QG = 122, DX = 1700, RX = 1370, RY = 560;
@@ -198,8 +198,8 @@ function render(t) {
   e1.style.opacity = t > 23.5 ? 1 - 0.6 * prog(t, 24.9, 25.2) : 0;
   showCap(e2, t, 25.05, 30.5, 960, 540, { stagger: 0.12, dy: 60 });
   const lgIn = E.outQuint(prog(t, 26.3, 27.0));
-  S(lg, { x: 960, y: 760 + (1 - lgIn) * 30, o: lgIn });
-  S(url, { x: 960, y: 850 + (1 - lgIn) * 30, o: E.outQuint(prog(t, 26.6, 27.2)) });
+  S(lg, { x: 960, y: 770, o: lgIn > 0 ? 1 : 0 }); M.logoIn(lg, prog(t, 26.2, 27.4));
+  S(url, { x: 960, y: 870 + (1 - lgIn) * 20, o: E.outQuint(prog(t, 26.6, 27.2)) });
 }
 M.play({ duration: 30, render });
 </script>

@@ -1,0 +1,31 @@
+1
+00:00:00,500 --> 00:00:02,600
+An idea hits you on a walk.
+
+2
+00:00:03,400 --> 00:00:06,400
+So you just say it, into Contextli.
+
+3
+00:00:07,200 --> 00:00:09,600
+It becomes a ticket.
+
+4
+00:00:10,350 --> 00:00:14,400
+Your loop picks it up, while you get on with your day.
+
+5
+00:00:14,800 --> 00:00:17,200
+And you hear back when it's done.
+
+6
+00:00:18,900 --> 00:00:22,400
+Every idea. All day. Shipped.
+
+7
+00:00:23,300 --> 00:00:25,100
+You think. It ships.
+
+8
+00:00:25,400 --> 00:00:27,800
+Loop engineering, with Contextli.
