@@ -43,6 +43,7 @@
 <script src="shared.js"></script>
 <script>
 const { clamp, prog, lerp, E, kf, env, S, add, caption, showCap, phone, phoneState, ring, ringState, logo, ICON } = M;
+const V = M.V;
 const darkp = document.getElementById('darkp'), L = document.getElementById('L'), R = document.getElementById('R'), top_ = document.getElementById('top');
 
 const DAY0 = 3.0, DAY1 = 16.0;
@@ -50,15 +51,29 @@ const clockAt = t => { const h = 9 + 9 * prog(t, DAY0, DAY1), hh = Math.floor(h)
   return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')}${hh >= 12 ? 'pm' : 'am'}`; };
 
 // ---------- intro ----------
-const intro = caption(top_, 'Same Claude. *Same day.*');
+const intro = caption(top_, V ? 'Same Claude. / *Same day.*' : 'Same Claude. *Same day.*');
 
 // ---------- left: code junkie ----------
 const hL = add(L, '<div class="side l">Code junkie<small>10 terminals, babysat</small></div>');
 const NAMES = ['api', 'web', 'billing', 'mobile', 'search', 'docs', 'infra', 'admin', 'emails', 'onboarding'];
 const TASKS = ['refactor auth', 'sticky navbar', 'stripe retries', 'iOS keyboard', 'fuzzy search', 'API docs', 'node 22', 'CSV export', 'unsubscribe', 'welcome flow'];
+// ---- layout: landscape = left/right split; portrait = top/bottom split with the clock on the seam ----
 const GRID = [];
-for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) GRID.push([190 + c * 290, 300 + r * 165]);
+if (V) for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) GRID.push([165 + c * 250, 520 + r * 140]);
+else for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) GRID.push([190 + c * 290, 300 + r * 165]);
 GRID.splice(10);
+const LY = V ? {
+  tileS: 0.85, intro: [540, 960], clock: [540, 960], hL: [540, 290], hR: [540, 1060],
+  talL: [540, 395, true], talR: [540, 1160, true], meta: false,
+  PHX: 330, PHY: 1400, phS: 0.5, RX: 790, RY: 1380, ringS: 0.72, rLab: [790, 1545], chip: [330, 1255], chipS: 1.0, miniDY: 0,
+  e2: [540, 760], logo: [540, 1100], url: [540, 1210], shift: [0, -300],
+} : {
+  tileS: 1, intro: [960, 540], clock: [960, 100], hL: [480, 120], hR: [1440, 120],
+  talL: [70, 975, false], talR: [1030, 975, false], meta: true,
+  PHX: 1220, PHY: 610, phS: 0.7, RX: 1690, RY: 560, ringS: 0.8, rLab: [1690, 750], chip: [1220, 250], chipS: 1.1,
+  e2: [960, 440], logo: [960, 770], url: [960, 870], shift: [-300, 0],
+};
+if (V) { const d = document.getElementById('darkp'); d.style.width = '1080px'; d.style.height = '960px'; d.style.transformOrigin = 'center top'; }
 const tiles = NAMES.map((n, i) => {
   const el = add(L, `<div class="mt"><div class="bar"><i></i><i></i><i></i><span>claude — ${n}</span></div><div class="b"><div style="color:var(--term-dim)">› ${TASKS[i]}</div><div>● working…</div><div class="s"></div></div></div>`);
   el._s = el.querySelector('.s'); return el;
@@ -86,29 +101,30 @@ function checks(row, n) { return Array.from({ length: n }, () => { const c = doc
 const chkL = checks(talL, SHIP_L.length), chkR = checks(talR, SHIP_R.length);
 
 const clock = add(top_, '<div class="clock">9:00am</div>');
-const PHX = 1220, PHY = 540, RX = 1690, RY = 500;
+const { PHX, PHY, RX, RY } = LY;
 
 // ---------- end ----------
 const e2 = caption(top_, 'Stop typing. / Start _orchestrating._', 'e2');
+if (V) e2.style.fontSize = '100px';
 const lg = logo(top_);
-const url = add(top_, '<div class="url">Set it up in 20 minutes · contextli.com/<b>loop-engineering</b></div>');
+const url = add(top_, `<div class="url" style="text-align:center">Set it up in 20 minutes${V ? '<br>' : ' · '}contextli.com/<b>loop-engineering</b></div>`);
 
 function render(t) {
-  showCap(intro, t, 0.2, 2.35, 960, 540, { stagger: 0.12 });
+  showCap(intro, t, 0.2, 2.35, ...LY.intro, { stagger: 0.12 });
 
   const split = E.inOut(prog(t, 2.3, 3.0)), collapse = E.inOut(prog(t, 17.6, 18.4));
-  darkp.style.transform = `scaleX(${split * (1 - collapse)})`;
+  darkp.style.transform = `${V ? 'scaleY' : 'scaleX'}(${split * (1 - collapse)})`;
   const lo = clamp(prog(t, 2.7, 3.2) * (1 - prog(t, 17.4, 17.8)));
   const ro = clamp(prog(t, 2.7, 3.2) * (1 - prog(t, 17.5, 18.0)));
   L.style.opacity = lo; R.style.opacity = ro;
-  L.style.transform = `translateX(${-collapse * 300}px)`;
+  L.style.transform = `translate(${collapse * LY.shift[0]}px, ${collapse * LY.shift[1]}px)`;
 
   // clock
-  S(clock, { x: 960, y: 100, s: 1 + (t > DAY1 && t < 17.4 ? 0.06 * Math.sin((t - DAY1) * 8) : 0), o: env(t, 2.8, 17.7, 0.4, 0.3) });
+  S(clock, { x: LY.clock[0], y: LY.clock[1], s: 1 + (t > DAY1 && t < 17.4 ? 0.06 * Math.sin((t - DAY1) * 8) : 0), o: env(t, 2.8, 17.7, 0.4, 0.3) });
   const ct = clockAt(t); if (clock._t !== ct) { clock._t = ct; clock.textContent = ct; }
 
   // ----- left -----
-  S(hL, { x: 480, y: 120, o: 1 });
+  S(hL, { x: LY.hL[0], y: LY.hL[1], o: 1 });
   let flashing = [];
   tiles.forEach((el, i) => {
     const a = 3.0 + i * 0.06, p = E.back(prog(t, a, a + 0.4));
@@ -116,7 +132,7 @@ function render(t) {
     if (flash) flashing.push(i);
     if (el._f !== flash) { el._f = flash; el.classList.toggle('flash', flash); el._s.textContent = flash ? '? proceed (y/n)' : '✻ thinking…'; }
     const jit = flash ? Math.sin(t * 50 + i) * 1.2 : 0;
-    S(el, { x: GRID[i][0] + jit, y: GRID[i][1], s: 0.6 + 0.4 * p, o: clamp(p * 2) });
+    S(el, { x: GRID[i][0] + jit, y: GRID[i][1], s: LY.tileS * (0.6 + 0.4 * p), o: clamp(p * 2) });
   });
   // cursor hops between tiles every 0.42s, always to a "needs you" one
   const hop = Math.floor((t - 3.6) / 0.42), hp = E.outQuint(clamp(((t - 3.6) % 0.42) / 0.28));
@@ -124,36 +140,36 @@ function render(t) {
   const [ax, ay] = tgt(hop - 1), [bx, by] = tgt(hop);
   S(cur, { x: lerp(ax, bx, hp) + 40, y: lerp(ay, by, hp) + 20, o: env(t, 3.6, DAY1, 0.2, 0.3) });
   swN.textContent = Math.max(0, Math.floor((t - 3.2) * 17.3));
-  S(talL, { x: 70, y: 975, o: 1 }); talL.style.transformOrigin = 'left';
-  talL.style.transform = `translate(70px, 975px) translateY(-50%)`;
+  const tal = (el, [x, y, centred]) => { el.style.transform = `translate(${x}px, ${y}px) translate(${centred ? '-50%' : '0'}, -50%)`; };
+  tal(talL, LY.talL);
   chkL.forEach((c, i) => { const p = E.back(prog(t, SHIP_L[i], SHIP_L[i] + 0.35)); c.style.transform = `scale(${p})`; c.style.opacity = clamp(p * 2); });
-  S(metaL, { x: 480, y: 1040, o: 1 });
+  S(metaL, { x: 480, y: 1040, o: LY.meta ? 1 : 0 });
 
   // ----- right -----
-  S(hR, { x: 1440, y: 120, o: 1 });
+  S(hR, { x: LY.hR[0], y: LY.hR[1], o: 1 });
   let k = -1; LIFE_T.forEach((a, i) => { if (t >= a) k = i; });
-  chips.forEach((c, i) => { const a = LIFE_T[i], b = i < 4 ? LIFE_T[i + 1] : 17.6, o = env(t, a, b, 0.3, 0.25); S(c, { x: PHX, y: 250 + (1 - o) * 16, s: 1.1, o }); });
+  chips.forEach((c, i) => { const a = LIFE_T[i], b = i < 4 ? LIFE_T[i + 1] : 17.6, o = env(t, a, b, 0.3, 0.25); S(c, { x: LY.chip[0], y: LY.chip[1] + (1 - o) * 16, s: LY.chipS, o }); });
   const amp = VOICE.reduce((m, v) => Math.max(m, env(t, v, v + 0.7, 0.15, 0.2)), 0);
-  S(ph, { x: PHX, y: PHY + 70, s: 0.7 });
+  S(ph, { x: PHX, y: PHY, s: LY.phS });
   phoneState(ph, t, { time: ct.replace(/am|pm/, ''), amp });
-  S(rg, { x: RX, y: RY + 60, s: 0.8 });
+  S(rg, { x: RX, y: RY, s: LY.ringS });
   const busy = SHIP_R.some((s, i) => t > VOICE[i] + 0.8 && t < s);
   ringState(rg, t * 150, SHIP_R.reduce((f, s, i) => (t > VOICE[i] + 0.8 && t < s + 0.2 ? Math.max(f, E.inOut(prog(t, VOICE[i] + 0.8, s))) : f), 0));
-  S(rLab, { x: RX, y: RY + 250, o: 1 });
+  S(rLab, { x: LY.rLab[0], y: LY.rLab[1], o: 1 });
   minis.forEach((m, i) => {
     const v = VOICE[i], f = E.inOut(prog(t, v + 0.55, v + 1.05));
-    const x = lerp(PHX + 30, RX, f), y = lerp(PHY + 20, RY + 60, f) - Math.sin(f * Math.PI) * 120;
+    const x = lerp(PHX + 30, RX, f), y = lerp(PHY - 50, RY, f) - Math.sin(f * Math.PI) * 120;
     S(m, { x, y, s: lerp(0.8, 0.5, f), o: t > v + 0.5 && f < 1 ? clamp(prog(t, v + 0.5, v + 0.6) * 1) * (1 - prog(f, 0.85, 1)) : 0 });
   });
-  talR.style.transform = `translate(1030px, 975px) translateY(-50%)`;
+  tal(talR, LY.talR);
   chkR.forEach((c, i) => { const p = E.back(prog(t, SHIP_R[i], SHIP_R[i] + 0.35)); c.style.transform = `scale(${p})`; c.style.opacity = clamp(p * 2); });
-  S(metaR, { x: 1440, y: 1040, o: 1 });
+  S(metaR, { x: 1440, y: 1040, o: LY.meta ? 1 : 0 });
 
   // ----- end -----
-  showCap(e2, t, 18.3, 30, 960, 440, { stagger: 0.12, dy: 60 });
+  showCap(e2, t, 18.3, 30, ...LY.e2, { stagger: 0.12, dy: 60 });
   const lgIn = E.outQuint(prog(t, 19.8, 20.5));
-  S(lg, { x: 960, y: 770, o: lgIn > 0 ? 1 : 0 }); M.logoIn(lg, prog(t, 19.8, 21.0));
-  S(url, { x: 960, y: 870 + (1 - lgIn) * 20, o: E.outQuint(prog(t, 20.1, 20.7)) });
+  S(lg, { x: LY.logo[0], y: LY.logo[1], o: lgIn > 0 ? 1 : 0 }); M.logoIn(lg, prog(t, 19.8, 21.0));
+  S(url, { x: LY.url[0], y: LY.url[1] + (1 - lgIn) * 20, o: E.outQuint(prog(t, 20.1, 20.7)) });
 }
 M.play({ duration: 23.5, render });
 </script>

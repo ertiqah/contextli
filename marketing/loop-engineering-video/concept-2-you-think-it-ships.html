@@ -30,10 +30,16 @@
 const { clamp, prog, lerp, E, kf, env, S, add, caption, showCap, phone, phoneState, ticket, ticketStatus, ring, ringState, logo, ICON } = M;
 const world = document.getElementById('world'), screen = document.getElementById('screen');
 
-const SX = [960, 2460, 3960, 5460, 6960], Y = 470, CY = 900;
+// ---- layout: landscape stations run left→right; portrait stations run top→bottom (camera scrolls down) ----
+const V = M.V, CXs = M.W / 2, CYs = M.H / 2;
+const P = i => V ? [540, 800 + i * 1250] : [960 + i * 1500, 470];   // station centres (world)
+const Pf = f => { const a = Math.floor(Math.min(f, 3.999)), b = a + 1, k = f - a; const A = P(a), B = P(b); return [lerp(A[0], B[0], k), lerp(A[1], B[1], k)]; };
+// arc helper: a point between A and B bowed sideways by `bow` (up in landscape, right in portrait)
+const arc = (A, B, f, bow) => [lerp(A[0], B[0], f) + (V ? Math.sin(f * Math.PI) * bow : 0), lerp(A[1], B[1], f) - (V ? 0 : Math.sin(f * Math.PI) * bow)];
+const CAP_DY = V ? 520 : 450, SUB_DY = V ? 700 : 540;
 
-const rail = add(world, '<div class="rail" style="width:6000px"></div>');
-const labels = ['Idea', 'Say it', 'Ticket', 'Loop', 'Done'].map(l => add(world, `<div class="slabel">${l}</div>`));
+const rail = add(world, V ? '<div class="rail" style="width:4px;height:5000px;background:repeating-linear-gradient(180deg, var(--line) 0 18px, transparent 18px 34px)"></div>' : '<div class="rail" style="width:6000px"></div>');
+const labels = ['Idea', 'Say it', 'Ticket', 'Loop', 'Done'].map(l => add(world, `<div class="slabel"${V ? ' style="font-size:230px"' : ''}>${l}</div>`));
 
 // station 0: the idea
 const chip = add(world, '<div class="chip"><span class="dot"></span>On a walk<span class="t">· 7:42am</span></div>');
@@ -52,103 +58,103 @@ const DOTS = Array.from({ length: N }, () => add(world, '<div class="idea"></div
 const OKS = Array.from({ length: N }, () => add(world, `<div class="okb">${ICON.checkW}</div>`));
 const idea = add(world, '<div class="idea"></div>');
 
-const caps = [
-  caption(world, 'An idea hits.', 'big'),
-  caption(world, 'Say it.', 'big'),
-  caption(world, 'It becomes a ticket.', 'big'),
-  caption(world, 'Your loop picks it up.', 'big'),
-  caption(world, 'You hear back when it’s _done._', 'big'),
-];
+const caps = (V
+  ? ['An idea hits.', 'Say it.', 'It becomes / a ticket.', 'Your loop / picks it up.', 'You hear back / when it’s _done._']
+  : ['An idea hits.', 'Say it.', 'It becomes a ticket.', 'Your loop picks it up.', 'You hear back when it’s _done._']).map(c => caption(world, c, 'big'));
 const sub3 = caption(world, 'while you get on with your day', 'xs');
 
-const capAll = caption(screen, 'Every idea. *All day.*', 'big');
+const capAll = caption(screen, V ? 'Every idea. / *All day.*' : 'Every idea. *All day.*', 'big');
 const tally = add(screen, `<div class="tally"><div class="okb" style="width:60px;height:60px">${ICON.checkW}</div>Shipped today <span class="n">0</span></div>`);
 const tallyN = tally.querySelector('.n');
 
-const end1 = caption(screen, 'You think. *It* _ships._', 'e2');
-const end2 = caption(screen, 'Be the orchestrator, not the code junkie.', 'xs');
+const end1 = caption(screen, V ? 'You think. / *It* _ships._' : 'You think. *It* _ships._', 'e2');
+const end2 = caption(screen, V ? 'Be the orchestrator, / not the code junkie.' : 'Be the orchestrator, not the code junkie.', 'xs');
 const lg = logo(screen);
-const url = add(screen, '<div class="url">Set it up in 20 minutes · contextli.com/<b>loop-engineering</b></div>');
+const url = add(screen, `<div class="url" style="text-align:center">Set it up in 20 minutes${V ? '<br>' : ' · '}contextli.com/<b>loop-engineering</b></div>`);
+const L = V ? { capAll: [540, 330], tally: [540, 1640], end1: [540, 720], end2: [540, 990], logo: [540, 1230], url: [540, 1345] }
+            : { capAll: [960, 210], tally: [960, 880], end1: [960, 430], end2: [960, 560], logo: [960, 760], url: [960, 860] };
 
 const MSTART = 18.7, MGAP = 0.1, MDUR = 1.9;
 
 function render(t) {
   // ---- camera ----
-  const camX = kf(t, [[0, SX[0]], [2.6, SX[0]], [3.4, SX[1]], [6.4, SX[1]], [7.2, SX[2]], [9.6, SX[2]], [10.4, SX[3]], [14.0, SX[3]], [14.8, SX[4]], [17.3, SX[4]], [18.6, SX[2]]]);
-  const z = kf(t, [[14.8, 1], [15.7, 1.12], [17.3, 1.12], [18.6, 0.255]]);
-  const camY = 540;
+  const idx = kf(t, [[0, 0], [2.6, 0], [3.4, 1], [6.4, 1], [7.2, 2], [9.6, 2], [10.4, 3], [14.0, 3], [14.8, 4], [17.3, 4], [18.6, 2]]);
+  const z = V ? kf(t, [[14.8, 1], [15.7, 1.12], [17.3, 1.12], [18.6, 0.186]]) : kf(t, [[14.8, 1], [15.7, 1.12], [17.3, 1.12], [18.6, 0.255]]);
+  const [cx, cy0] = Pf(idx);
+  const camY = cy0 + (V ? kf(t, [[17.3, 230], [18.6, -73]]) : 70);
   const worldFade = 1 - E.inOut(prog(t, 22.7, 23.3));
-  world.style.transform = `translate(960px,540px) scale(${z}) translate(${-camX}px,${-camY}px)`;
+  world.style.transform = `translate(${CXs}px,${CYs}px) scale(${z}) translate(${-cx}px,${-camY}px)`;
   world.style.opacity = worldFade;
 
   const zoomed = prog(t, 17.6, 18.5);
-  S(rail, { x: SX[2], y: Y, o: 0.25 + 0.75 * zoomed });
-  labels.forEach((l, i) => S(l, { x: SX[i], y: 1010, o: E.out(prog(t, 18.3 + i * 0.08, 18.8 + i * 0.08)) }));
+  S(rail, { x: P(2)[0], y: P(2)[1], o: 0.25 + 0.75 * zoomed });
+  labels.forEach((l, i) => { const [x, y] = P(i); S(l, V ? { x: x + 820, y } : { x, y: 1010 }); l.style.opacity = E.out(prog(t, 18.3 + i * 0.08, 18.8 + i * 0.08)); });
 
   // ---- station 0: idea ----
   const ideaIn = E.back(prog(t, 0.2, 0.7));
-  let ix = SX[0], iy = Y, is = ideaIn, io = clamp(ideaIn * 2);
+  const P0 = P(0), P1 = P(1), P2 = P(2), P3 = P(3), P4 = P(4);
+  let [ix, iy] = P0, is = ideaIn, io = clamp(ideaIn * 2);
   const fly = E.inOut(prog(t, 2.55, 3.4));
-  if (t > 2.55) { ix = lerp(SX[0], SX[1], fly); iy = lerp(Y, Y + 210, fly) - Math.sin(fly * Math.PI) * 220; }
+  if (t > 2.55) [ix, iy] = arc(P0, [P1[0], P1[1] + 210], fly, 220);
   if (t > 3.4) { is = 1 - E.in(prog(t, 3.4, 3.6)); }
   is *= 1 + 0.08 * Math.sin(t * 5);
   S(idea, { x: ix, y: iy, s: is * 1.4, o: t > 3.6 ? 0 : io });
   const hp = (t * 0.9) % 1;
-  S(halo, { x: SX[0], y: Y, s: 1.4 + hp * 2.4, o: t < 2.6 ? (1 - hp) * 0.7 * io : 0 });
-  S(chip, { x: SX[0], y: Y - 150 + (1 - E.out(prog(t, 0.6, 1.1))) * 20, s: 1.3, o: env(t, 0.6, 2.7, 0.4, 0.3) });
+  S(halo, { x: P0[0], y: P0[1], s: 1.4 + hp * 2.4, o: t < 2.6 ? (1 - hp) * 0.7 * io : 0 });
+  S(chip, { x: P0[0], y: P0[1] - 150 + (1 - E.out(prog(t, 0.6, 1.1))) * 20, s: 1.3, o: env(t, 0.6, 2.7, 0.4, 0.3) });
 
   // ---- station 1: speak ----
-  S(ph1, { x: SX[1], y: Y, s: 0.82 });
+  S(ph1, { x: P1[0], y: P1[1], s: 0.82 });
   phoneState(ph1, t, { time: '7:42', text: 'Make the onboarding emails shorter. Three lines max.', tp: prog(t, 3.6, 5.4), amp: env(t, 3.5, 5.5, 0.2, 0.3), tag: prog(t, 5.5, 5.85) * (1 - prog(t, 6.5, 6.7)) });
 
   // ---- ticket ----
   const tOut = E.inOut(prog(t, 6.4, 7.2)), tIn = E.inOut(prog(t, 9.6, 10.4)), tDone = E.inOut(prog(t, 14.0, 14.75));
-  let tx = lerp(SX[1], SX[2], tOut), ty = lerp(Y - 40, Y, tOut) - Math.sin(tOut * Math.PI) * 160, ts = lerp(0.5, 1.5, tOut);
-  if (t > 9.6) { tx = lerp(SX[2], SX[3], tIn); ty = Y; ts = lerp(1.5, 0.72, tIn); }
-  if (t > 10.4 && t < 14.0) ty = Y + Math.sin((t - 10.4) * 3) * 5;
-  if (t > 14.0) { tx = lerp(SX[3], SX[4], tDone); ty = lerp(Y, Y - 250, tDone) - Math.sin(tDone * Math.PI) * 120; ts = lerp(0.72, 0.45, tDone); }
+  let [tx, ty] = arc([P1[0], P1[1] - 40], P2, tOut, 160), ts = lerp(0.5, V ? 1.45 : 1.5, tOut);
+  if (t > 9.6) { [tx, ty] = arc(P2, P3, tIn, 0); ts = lerp(V ? 1.45 : 1.5, 0.72, tIn); }
+  if (t > 10.4 && t < 14.0) ty = P3[1] + Math.sin((t - 10.4) * 3) * 5;
+  if (t > 14.0) { [tx, ty] = arc(P3, [P4[0], P4[1] - 250], tDone, 120); ts = lerp(0.72, 0.45, tDone); }
   ticketStatus(tk, t > 13.5 ? 'done' : t > 10.5 ? 'working' : 'queued');
   S(tk, { x: tx, y: ty, s: ts, o: clamp(prog(t, 6.4, 6.55) * 3) * (1 - prog(t, 14.55, 14.8)) });
 
-  S(ghost, { x: SX[2], y: Y, s: 1.5, o: zoomed * worldFade });
+  S(ghost, { x: P2[0], y: P2[1], s: 1.5, o: zoomed * worldFade });
 
   // ---- station 3: loop ----
-  const working = t > 10.6 && t < 13.5;
   ringState(rg, t * 120 + E.inOut(prog(t, 10.6, 13.5)) * 360, t < 14.3 ? E.inOut(prog(t, 10.8, 13.4)) : 0);
-  S(rg, { x: SX[3], y: Y, s: 1.3 });
-  S(rLabel, { x: SX[3], y: Y + 300, o: 1 - zoomed });
+  S(rg, { x: P3[0], y: P3[1], s: 1.3 });
+  S(rLabel, { x: P3[0], y: P3[1] + 300, o: 1 - zoomed });
 
   // ---- station 4: done ----
-  S(ph2, { x: SX[4], y: Y, s: 0.82 });
+  S(ph2, { x: P4[0], y: P4[1], s: 0.82 });
   phoneState(ph2, t, { time: '10:05', notifs: [[prog(t, 14.65, 15.1), 'Done: Shorter onboarding emails', 'PR ready · 3 templates updated.']] });
 
   // ---- world captions ----
   const capWin = [[0.5, 2.7], [3.35, 6.5], [7.15, 9.7], [10.35, 14.1], [14.75, 17.4]];
-  caps.forEach((c, i) => showCap(c, t, capWin[i][0], capWin[i][1], SX[i], CY + 20));
-  showCap(sub3, t, 11.0, 14.1, SX[3], CY + 110, { stagger: 0.04 });
+  caps.forEach((c, i) => showCap(c, t, capWin[i][0], capWin[i][1], P(i)[0], P(i)[1] + CAP_DY));
+  showCap(sub3, t, 11.0, 14.1, P3[0], P3[1] + SUB_DY, { stagger: 0.04 });
 
   // ---- montage: every idea flows through the pipeline ----
   let shipped = t > 15 ? 1 : 0;
   DOTS.forEach((d, i) => {
     const a = MSTART + i * MGAP, u = prog(t, a, a + MDUR);
     const seg = Math.min(3.999, u * 4), k = Math.floor(seg), f = E.inOut(seg - k);
-    const x = lerp(SX[k], SX[k + 1], f), y = Y - Math.sin(f * Math.PI) * 140;
+    const [x, y] = arc(P(k), P(k + 1), f, 140);
     S(d, { x, y, s: 2.2, o: t > a && u < 1 ? clamp((t - a) * 6) * (1 - prog(u, 0.97, 1)) : 0 });
-    const ok = OKS[i], op = prog(t, a + MDUR, a + MDUR + 0.9);
-    S(ok, { x: SX[4] + Math.sin(i * 2.4) * 120, y: Y - 380 - E.out(op) * 520, s: 0.6 + 0.6 * E.back(clamp(op * 3)), o: op > 0 && op < 1 ? 1 - E.in(op) : 0 });
+    const ok = OKS[i], op = prog(t, a + MDUR, a + MDUR + 0.9), spread = Math.sin(i * 2.4) * 120;
+    const okPos = V ? { x: P4[0] - 380 - E.out(op) * 700, y: P4[1] + spread } : { x: P4[0] + spread, y: P4[1] - 380 - E.out(op) * 520 };
+    S(ok, { ...okPos, s: 0.6 + 0.6 * E.back(clamp(op * 3)), o: op > 0 && op < 1 ? 1 - E.in(op) : 0 });
     if (t > a + MDUR) shipped++;
   });
 
   // ---- screen-level ----
-  showCap(capAll, t, 18.8, 22.9, 960, 210);
-  S(tally, { x: 960, y: 880, o: env(t, 19.1, 22.9, 0.4, 0.3) });
+  showCap(capAll, t, 18.8, 22.9, ...L.capAll);
+  S(tally, { x: L.tally[0], y: L.tally[1], o: env(t, 19.1, 22.9, 0.4, 0.3) });
   tallyN.textContent = shipped;
 
-  showCap(end1, t, 23.2, 30, 960, 430, { stagger: 0.14, dy: 60 });
-  showCap(end2, t, 24.4, 30, 960, 560, { stagger: 0.04 });
+  showCap(end1, t, 23.2, 30, ...L.end1, { stagger: 0.14, dy: 60 });
+  showCap(end2, t, 24.4, 30, ...L.end2, { stagger: 0.04 });
   const lgIn = E.outQuint(prog(t, 25.2, 25.9));
-  S(lg, { x: 960, y: 760, o: lgIn > 0 ? 1 : 0 }); M.logoIn(lg, prog(t, 25.2, 26.4));
-  S(url, { x: 960, y: 860 + (1 - lgIn) * 20, o: E.outQuint(prog(t, 25.5, 26.1)) });
+  S(lg, { x: L.logo[0], y: L.logo[1], o: lgIn > 0 ? 1 : 0 }); M.logoIn(lg, prog(t, 25.2, 26.4));
+  S(url, { x: L.url[0], y: L.url[1] + (1 - lgIn) * 20, o: E.outQuint(prog(t, 25.5, 26.1)) });
 }
 M.play({ duration: 28.5, render });
 </script>

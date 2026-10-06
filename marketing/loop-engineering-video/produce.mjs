@@ -1,13 +1,14 @@
-// Final audio mix + mux for the loop-engineering videos.
+// Final audio mix + mux for the loop-engineering videos (landscape and vertical cuts).
 //
-//   ELEVENLABS_API_KEY=... node produce.mjs                 # all concepts, VO + music + SFX
-//   ELEVENLABS_API_KEY=... node produce.mjs concept-1-ten-terminals
-//   node produce.mjs                                         # no key: SFX-only cut
+//   node produce.mjs                          # music + SFX (music from audio/cache, or generated if ELEVENLABS_API_KEY is set)
+//   node produce.mjs concept-1-ten-terminals  # one concept
+//   WITH_VO=1 ELEVENLABS_API_KEY=... node produce.mjs   # also add the ElevenLabs voiceover (off by default)
 //
-// Optional env: ELEVENLABS_VOICE_ID (default from audio/cues.json), MUSIC_DB / VO_DB / SFX_DB (stem loudness, LUFS).
+// In the cloud sandbox prefix NODE_USE_ENV_PROXY=1 so Node's fetch goes through the egress proxy.
+// Optional env: ELEVENLABS_VOICE_ID, ELEVENLABS_FORMAT, MUSIC_DB / VO_DB / SFX_DB (stem loudness, LUFS).
 // Needs Node 18+ and ffmpeg/ffprobe on PATH. Generated VO/music is cached in audio/cache/ (re-runs cost nothing).
-// Inputs: out/<concept>.mp4 (silent picture, from render.cjs) and audio/sfx/<concept>.wav (from audio/sfx.py).
-// Outputs: out/final/<concept>.mp4 and out/final/<concept>.srt
+// Inputs: out/<concept>.mp4 and out/<concept>-vertical.mp4 (silent picture, from render.cjs), audio/sfx/<concept>.wav (from audio/sfx.py).
+// Outputs: out/final/<concept>.mp4, out/final/<concept>-vertical.mp4 (+ .srt when WITH_VO=1)
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -20,7 +21,11 @@ const API = 'https://api.elevenlabs.io/v1';
 const FMT = process.env.ELEVENLABS_FORMAT || 'mp3_44100_128'; // 192k needs the Creator tier
 const CACHE = path.join(DIR, 'audio/cache');
 const OUT = path.join(DIR, 'out/final');
-const TARGET = { vo: +(process.env.VO_DB ?? -16), music: +(process.env.MUSIC_DB ?? -23), sfx: +(process.env.SFX_DB ?? -24), master: -14 };
+const WITH_VO = !!process.env.WITH_VO;
+// Stem loudness (LUFS). Without a voice the music carries the cut, so it sits higher.
+const TARGET = WITH_VO
+  ? { vo: +(process.env.VO_DB ?? -16), music: +(process.env.MUSIC_DB ?? -23), sfx: +(process.env.SFX_DB ?? -24), master: -14 }
+  : { music: +(process.env.MUSIC_DB ?? -17), sfx: +(process.env.SFX_DB ?? -21), master: -14 };
 mkdirSync(CACHE, { recursive: true }); mkdirSync(OUT, { recursive: true });
 
 const sha = s => createHash('sha1').update(s).digest('hex').slice(0, 12);
@@ -82,17 +87,19 @@ const srtTime = s => { const ms = Math.round(s * 1000); const h = Math.floor(ms 
 
 async function produce(name) {
   const c = CUES.concepts[name], D = c.duration;
-  const video = path.join(DIR, 'out', `${name}.mp4`), sfx = path.join(DIR, 'audio/sfx', `${name}.wav`);
-  if (!existsSync(video) || !existsSync(sfx)) throw new Error(`missing ${video} or ${sfx}`);
+  const sfx = path.join(DIR, 'audio/sfx', `${name}.wav`);
+  const videos = ['', '-vertical'].map(v => path.join(DIR, 'out', `${name}${v}.mp4`)).filter(existsSync);
+  if (!videos.length || !existsSync(sfx)) throw new Error(`missing picture for ${name} or ${sfx}`);
   console.log(`\n${name}`);
-  const vo = KEY ? await voiceLines(c) : null;
-  const mus = KEY ? await music(name, c) : null;
+  const vo = WITH_VO && KEY ? await voiceLines(c) : null;
+  const mus = await music(name, c).catch(e => (console.warn('  no music:', e.message.slice(0, 140)), null));
 
   // Static per-stem gains so each stem sits at its target loudness before the mix.
   const gain = (f, target) => `${(target - lufs(f)).toFixed(2)}dB`;
-  const inputs = ['-i', video, '-i', sfx];
-  const graph = [`[1:a]aresample=48000,volume=${gain(sfx, TARGET.sfx)},apad,atrim=0:${D}[sfx]`];
+  const inputs = ['-i', sfx];
+  const graph = [`[0:a]aresample=48000,volume=${gain(sfx, TARGET.sfx)},apad,atrim=0:${D}[sfx]`];
   const mixIns = ['[sfx]'];
+  const musChain = m => `[${m}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${gain(mus, TARGET.music)},volume='${c.music_gain || 1}':eval=frame,apad,atrim=0:${D},afade=t=in:d=0.3,afade=t=out:st=${D - 2.2}:d=2.2`;
 
   if (vo) {
     // build the VO stem first so we can measure it as one track
@@ -103,27 +110,34 @@ async function produce(name) {
       vg.push(`${vo.map((_, i) => `[v${i}]`).join('')}amix=inputs=${vo.length}:normalize=0:duration=longest,apad,atrim=0:${D}[vo]`);
       ff([...vin, '-filter_complex', vg.join(';'), '-map', '[vo]', '-ar', '48000', voStem]);
     }
-    inputs.push('-i', voStem, '-i', mus);
-    graph.push(`[2:a]aresample=48000,volume=${gain(voStem, TARGET.vo)},asplit=2[vo][vokey]`);
-    graph.push(`[3:a]aresample=48000,aformat=channel_layouts=stereo,volume=${gain(mus, TARGET.music)},volume='${c.music_gain || 1}':eval=frame,apad,atrim=0:${D},afade=t=in:d=0.3,afade=t=out:st=${D - 2.2}:d=2.2[mraw]`);
-    // duck music ~6 dB under the voice
-    graph.push(`[mraw][vokey]sidechaincompress=threshold=0.03:ratio=5:attack=25:release=450:makeup=1[mus]`);
-    mixIns.push('[vo]', '[mus]');
+    inputs.push('-i', voStem);
+    graph.push(`[1:a]aresample=48000,volume=${gain(voStem, TARGET.vo)},asplit=2[vo][vokey]`);
+    mixIns.push('[vo]');
+    if (mus) {
+      inputs.push('-i', mus);
+      graph.push(`${musChain(2)}[mraw]`, `[mraw][vokey]sidechaincompress=threshold=0.03:ratio=5:attack=25:release=450:makeup=1[mus]`); // duck ~6 dB under the voice
+      mixIns.push('[mus]');
+    } else graph.push('[vokey]anullsink');
+  } else if (mus) {
+    inputs.push('-i', mus);
+    graph.push(`${musChain(1)}[mus]`);
+    mixIns.push('[mus]');
   }
   graph.push(`${mixIns.join('')}amix=inputs=${mixIns.length}:normalize=0:duration=first[mix]`);
   // master: static gain to target, then a true-peak limiter
   const pre = path.join(CACHE, `premaster-${name}.wav`);
   ff([...inputs, '-filter_complex', graph.join(';'), '-map', '[mix]', '-ar', '48000', '-t', String(D), pre]);
-  const master = `volume=${((vo ? TARGET.master : -18) - lufs(pre)).toFixed(2)}dB,alimiter=limit=0.89:level=false:attack=3:release=60`;
-  const dst = path.join(OUT, `${name}.mp4`);
-  ff(['-i', video, '-i', pre, '-filter_complex', `[1:a]${master}[a]`, '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '256k', '-t', String(D), '-movflags', '+faststart', dst]);
-  console.log(`  wrote ${path.relative(DIR, dst)}  (${vo ? 'VO + music + SFX' : 'SFX only — set ELEVENLABS_API_KEY for VO + music'}), master ${lufs(dst).toFixed(1)} LUFS`);
+  const master = `volume=${(TARGET.master - lufs(pre)).toFixed(2)}dB,alimiter=limit=0.89:level=false:attack=3:release=60`;
+  const what = [vo && 'VO', mus && 'music', 'SFX'].filter(Boolean).join(' + ');
+  for (const video of videos) {
+    const dst = path.join(OUT, path.basename(video));
+    ff(['-i', video, '-i', pre, '-filter_complex', `[1:a]${master}[a]`, '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '256k', '-t', String(D), '-movflags', '+faststart', dst]);
+    console.log(`  wrote ${path.relative(DIR, dst)}  (${what}), master ${lufs(dst).toFixed(1)} LUFS`);
+  }
 
-  // captions from the VO script (actual spoken timing when VO exists)
-  const lines = (vo || c.vo).map((v, i) => `${i + 1}\n${srtTime(v.t)} --> ${srtTime(vo ? v.t + v.dur : v.end)}\n${v.text}\n`);
-  writeFileSync(path.join(OUT, `${name}.srt`), lines.join('\n'));
+  // captions from the VO script, only when there is a voice (the story is already on screen)
+  if (vo) writeFileSync(path.join(OUT, `${name}.srt`), vo.map((v, i) => `${i + 1}\n${srtTime(v.t)} --> ${srtTime(v.t + v.dur)}\n${v.text}\n`).join('\n'));
 }
 
 const names = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(CUES.concepts);
-if (!KEY) console.warn('ELEVENLABS_API_KEY not set: producing SFX-only cuts.');
 for (const n of names) await produce(n);

@@ -1,7 +1,10 @@
 // Tiny deterministic motion engine: every frame is a pure function of time t (seconds).
 // Preview: autoplays + loops. Render: ?render=1 exposes window.__seek(t) for frame capture.
 (function () {
-  const W = 1920, H = 1080;
+  // ?v=1 → vertical 9:16 (1080×1920). Each concept reads M.V and picks its portrait layout.
+  const V = new URLSearchParams(location.search).has('v');
+  const W = V ? 1080 : 1920, H = V ? 1920 : 1080;
+  if (V) document.body.classList.add('vertical');
   const clamp = (x, a = 0, b = 1) => (x < a ? a : x > b ? b : x);
   const prog = (t, a, b) => clamp((t - a) / (b - a));
   const lerp = (a, b, x) => a + (b - a) * x;
@@ -225,5 +228,5 @@
     });
   }
 
-  window.M = { W, H, clamp, prog, lerp, E, kf, env, S, h, add, typed, ICON, MARK, caption, showCap, terminal, phone, phoneState, ticket, ticketStatus, ring, ringState, logo, logoIn, play };
+  window.M = { V, W, H, clamp, prog, lerp, E, kf, env, S, h, add, typed, ICON, MARK, caption, showCap, terminal, phone, phoneState, ticket, ticketStatus, ring, ringState, logo, logoIn, play };
 })();

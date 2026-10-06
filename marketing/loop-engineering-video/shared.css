@@ -51,6 +51,7 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
 }
+body.vertical #stage { width: 1080px; height: 1920px; }
 body.render #stage { left: 0; top: 0; transform: none !important; }
 
 .abs { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
@@ -129,7 +130,7 @@ body.render #stage { left: 0; top: 0; transform: none !important; }
 .ph-ring { position: absolute; left: 50%; bottom: 60px; width: 104px; height: 104px; margin-left: -52px; border-radius: 50%; border: 3px solid var(--accent); }
 .ph-notif {
   position: absolute; left: 14px; right: 14px; top: 70px; padding: 18px 20px; border-radius: 26px;
-  background: rgba(255,255,255,.96); box-shadow: 0 14px 40px rgba(0,0,0,.14); border: 1px solid var(--line);
+  background: #fff; box-shadow: 0 14px 40px rgba(0,0,0,.14); border: 1px solid var(--line);
   z-index: 6;
 }
 .ph-notif .n-top { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--muted); font-weight: 600; }
